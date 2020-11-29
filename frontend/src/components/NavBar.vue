@@ -1,0 +1,48 @@
+<template>
+  <nav
+    class="navbar fixed-top navbar-expand-lg navbar-light p-0 px-2"
+    style="background-color: var(--secondary-bg-color)"
+  >
+    <a class="navbar-brand company-name" href="#">
+      <img src="../assets/logo.png" width="50" height="50" alt="" />
+      HARalytics
+    </a>
+
+    <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+          <a class="nav-link" @click="$router.push('user')">My Data</a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" @click="$router.push('admin')">General Data</a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" @click="$router.push('upload')">Upload</a>
+        </li>
+      </ul>
+
+      <button
+        class="btn btn-danger my-2 my-sm-0"
+        @click="$router.push('/')"
+        type="submit"
+      >
+        Log Out
+      </button>
+    </div>
+  </nav>
+</template>
+
+<script>
+export default {
+  name: "NavBar",
+};
+</script>
+
+<style scoped>
+.company-name {
+  font-weight: bold;
+}
+.nav-item {
+  cursor: pointer;
+}
+</style>
