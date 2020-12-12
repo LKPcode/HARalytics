@@ -133,6 +133,7 @@ export default {
       console.log("login!!");
       this.$axios
         .post("http://127.0.0.1:5000/login", {
+          email: this.user.email,
           name: this.user.name,
           password: this.user.password,
         })
@@ -148,11 +149,14 @@ export default {
         .catch(() => this.errors.push("Login was unsuccessful")); //wrong credentials
     },
     signup() {
-      this.checkInput();
+      if (!this.inputIsCorrect()) {
+        return 0;
+      }
 
       console.log("signup!!");
       this.$axios
         .post("http://127.0.0.1:5000/signin", {
+          email: this.user.email,
           name: this.user.name,
           password: this.user.password,
           password_2: this.user.password_2,

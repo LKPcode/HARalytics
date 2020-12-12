@@ -19,24 +19,35 @@ class MySQL:
 
     # Inserting a user to the database
     def create_user(self, user):
+
         mycursor = self.mydb.cursor()
+
         # Constructing and Inserting a User row
         entry_sql = "INSERT INTO `mydtbs`.`User` (`email`, `ip`, `username`, `password`, `ISP`, `admin`) VALUES (%s,%s,%s,%s,%s,%s);"
-        entry_val = (user["email"], user["ip"], user["username"],
+        entry_val = (user["email"], user["ip"], user["name"],
                      user["password"], user["isp"], "0")
 
         mycursor.execute(entry_sql, entry_val)
         print(mycursor.lastrowid)
         self.mydb.commit()
 
+    def user_exists(self, user):
+        mycursor = self.mydb.cursor()
+
+        mycursor.execute("SELECT * from User WHERE email=%s", (user["email"],))
+        if len(mycursor.fetchall()) > 0:
+            return True
+        return False
+
     # Method to insert data, for now we load them from a file just for simplicity
 
-    def insert_data(self, email):
+    def insert_data(self, data, user):
         # Load the test.json data into the "data" variable
-        with open('./uploads/test2.json') as json_file:
-            data = json.load(json_file)
+        # with open('./uploads/test2.json') as json_file:
+        #     data = json.load(json_file)
 
         mycursor = self.mydb.cursor()
+        email = user["email"]
 
         # Going through every entry in the JSON array
         for entry in data["new_json"]:
@@ -97,11 +108,11 @@ def if_empty_string_then_none(string):
 #{"serverIPAddress":"104.248.50.87","startedDateTime":"2020-11-22T22:30:24.913Z","timings":218.69900000024336,"method":"GET","url":"https://vuejs.org/","ReqHeaders":{"content_type":"","cache_control":""},"status":200,"statusText":"","ResHeaders":{"content_type":"","cache_control":"public, max-age=0, must-revalidate"}}
 
 
-db = MySQL()
+# db = MySQL()
 
-db.insert_data("dlp@gmail.com")
+# db.insert_data("dlp@gmail.com")
 
-db.create_user({"email": "e@ppp.com", "username": "yoyo",
-                "password": "password", "ip": "1.1.1.1", "isp": "Wind"})
+# db.create_user({"email": "e@ppp.com", "username": "yoyo",
+#                 "password": "password", "ip": "1.1.1.1", "isp": "Wind"})
 
 # print(clean_datetime("2020-11-22T22:30:24.913Z"))

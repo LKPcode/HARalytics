@@ -5,11 +5,11 @@ from auth import *
 from werkzeug.utils import secure_filename
 import os
 
-from database import MongoDB
+from database import MySQL
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = "./uploads"
-db = MongoDB()
+db = MySQL()
 
 
 # url_for('static', filename='style.css')
@@ -18,7 +18,10 @@ db = MongoDB()
 @app.route('/signin', methods=['POST'])
 def signin():
     user = request.json
-    if db.create_user(user):
+    user["ip"] = request.remote_addr
+    user["isp"] = "Wind"
+    if not db.user_exists(user):
+        db.create_user(user)
         return jsonify({"token": encode_jwt(user).decode("utf-8")}), 201
     else:
         return jsonify({"msg": "user already exists"}), 401
@@ -35,15 +38,16 @@ def login():
 
 
 @app.route("/upload", methods=["POST"])
-# @authentication_required
+@authentication_required
 def upload_data():
     data = request.json
-    print(data["new_json"][0])
+    # print(data["new_json"][0])
     try:
-        #db.insert_entries(request.user, data["new_json"])
+        db.insert_data(data, request.user)
         return jsonify({"msg": "upload was succesfull"}), 200
     except:
-        return jsonify({"msg": "JSON data does not have the right structure"}), 404
+        return jsonify({"msg": "JSON data does not have the right structure"}), 400
+
 
 # @app.route('/upload', methods=['POST'])
 # @authentication_required

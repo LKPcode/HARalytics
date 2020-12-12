@@ -53,6 +53,7 @@ export default {
       processing: false,
       processed: false,
       filename: "",
+      token: this.$store.token,
     };
   },
   methods: {
@@ -115,7 +116,11 @@ export default {
     },
     uploadJson() {
       this.$axios
-        .post("http://127.0.0.1:5000/upload", this.json)
+        .post("http://127.0.0.1:5000/upload", this.json, {
+          headers: {
+            Authorization: `Token ${this.token}`,
+          },
+        })
         .then((res) => {
           console.log(res.data);
           this.$router.push("/");

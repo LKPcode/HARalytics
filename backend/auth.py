@@ -28,3 +28,6 @@ def authentication_required(fn):
         else:
             return jsonify({"msg": "Token was not provided"}), 401
     return wrapper
+
+
+# print(decode_jwt(str.encode("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6InNpbXBsZWFub25AdHV0YW5vdGEuY29tIiwibmFtZSI6Im5pa29zIiwicGFzc3dvcmQiOiJMb3VrYXMhQCM0IiwicGFzc3dvcmRfMiI6IkxvdWthcyFAIzQiLCJpcCI6IjEyNy4wLjAuMSIsImlzcCI6IldpbmQifQ.gKQNlcQngPwlcSMeHm8IKpbqnymYILi8jNgc3Hgw_5Y")))
