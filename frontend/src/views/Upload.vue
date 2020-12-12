@@ -87,12 +87,28 @@ export default {
       let new_headers = {
         content_type: "",
         cache_control: "",
+        pragma: "",
+        expires: "",
+        age: "",
+        last_modified: "",
+        host: "",
       };
 
       for (let index in headers) {
-        if (headers[index].name == "cache-control") {
-          console.log("hey");
+        if (headers[index].name == "content-type") {
+          new_headers.content_type = headers[index].value;
+        } else if (headers[index].name == "cache-control") {
           new_headers.cache_control = headers[index].value;
+        } else if (headers[index].name == "pragma") {
+          new_headers.pragma = headers[index].value;
+        } else if (headers[index].name == "expires") {
+          new_headers.expires = headers[index].value;
+        } else if (headers[index].name == "age") {
+          new_headers.age = headers[index].value;
+        } else if (headers[index].name == "last_modified") {
+          new_headers.last_modified = headers[index].value;
+        } else if (headers[index].name == "host") {
+          new_headers.host = headers[index].value;
         }
       }
       return new_headers;
@@ -126,21 +142,17 @@ export default {
           new_json.push({
             serverIPAddress: entries[index].serverIPAddress,
             startedDateTime: entries[index].startedDateTime,
-            timings: { wait: entries[index].timings.wait },
-            request: {
-              method: entries[index].request.method,
-              url: entries[index].request.url,
-              headers: this.changeHeadersStructure(
-                entries[index].request.headers
-              ),
-            },
-            response: {
-              status: entries[index].response.status,
-              statusText: entries[index].response.statusText,
-              headers: this.changeHeadersStructure(
-                entries[index].response.headers
-              ),
-            },
+            timings: entries[index].timings.wait,
+            method: entries[index].request.method,
+            url: entries[index].request.url,
+            ReqHeaders: this.changeHeadersStructure(
+              entries[index].request.headers
+            ),
+            status: entries[index].response.status,
+            statusText: entries[index].response.statusText,
+            ResHeaders: this.changeHeadersStructure(
+              entries[index].response.headers
+            ),
           });
         }
 

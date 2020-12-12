@@ -7,6 +7,11 @@
           <column-chart />
         </div>
         <div class="col-sm card m-3 p-3">
+          <pie-chart />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm card m-3 p-3">
           <scatter-chart />
         </div>
       </div>
@@ -24,6 +29,7 @@ import ColumnChart from "../components/ColumnChart.vue";
 import ScatterChart from "../components/ScatterChart.vue";
 import ServerMap from "../components/ServerMap.vue";
 import NavBar from "../components/NavBar.vue";
+import PieChart from "../components/PieChart.vue";
 
 export default {
   name: "Admin",
@@ -32,6 +38,7 @@ export default {
     ScatterChart,
     ServerMap,
     NavBar,
+    PieChart,
   },
 };
 </script>
