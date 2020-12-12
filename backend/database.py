@@ -1,62 +1,107 @@
 import json
-import pymongo
+import mysql.connector
+
+# Difine the Database Class
 
 
-class MongoDB:
+class MySQL:
 
+    # Python Constructor
     def __init__(self):
-        myclient = pymongo.MongoClient("mongodb://localhost:27017/")
-        mydb = myclient["entries"]
-        self.col = mydb["everything"]
+        # Change the parameters so they reflect your own system
+        self.mydb = mysql.connector.connect(
+            host="localhost",
+            port="3307",  # default 3306
+            user="root",
+            password="password",
+            database="mydtbs"
+        )
 
-    # USER
-    def user_exists(self, user):
-        exists = self.col.find(
-            {"$and": [{"name": {"$eq": user["name"]}}, {"password": user["password"]}]}, {"name": 1})
-        try:
-            if exists[0]:
-                return True
-        except:
-            return False
-
+    # Inserting a user to the database
     def create_user(self, user):
-        if not self.user_exists(user):
-            self.col.insert_one(
-                {"name": user["name"], "password": user["password"], "state": "user"})
-            return True
-        else:
-            return False
+        mycursor = self.mydb.cursor()
+        # Constructing and Inserting a User row
+        entry_sql = "INSERT INTO `mydtbs`.`User` (`email`, `ip`, `username`, `password`, `ISP`, `admin`) VALUES (%s,%s,%s,%s,%s,%s);"
+        entry_val = (user["email"], user["ip"], user["username"],
+                     user["password"], user["isp"], "0")
 
-    def insert_entries(self, user, entries):
+        mycursor.execute(entry_sql, entry_val)
+        print(mycursor.lastrowid)
+        self.mydb.commit()
 
-        self.col.update({"name": user["name"]}, {
-                        "$push": {"entries": {"$each": entries}}})
+    # Method to insert data, for now we load them from a file just for simplicity
+
+    def insert_data(self, email):
+        # Load the test.json data into the "data" variable
+        with open('./uploads/test2.json') as json_file:
+            data = json.load(json_file)
+
+        mycursor = self.mydb.cursor()
+
+        # Going through every entry in the JSON array
+        for entry in data["new_json"]:
+
+            # Constructing and Inserting a Header row
+            reqHeader = entry["ReqHeaders"]
+            sql = "INSERT INTO `mydtbs`.`Header` ( `content_type`, `age`, `cache_control`, `pragma`, `expires`, `last_modified`, `host`) VALUES(%s,%s,%s,%s,%s,%s,%s);"
+            val = (reqHeader["content_type"], if_empty_string_then_none(reqHeader["age"]), reqHeader["cache_control"],
+                   reqHeader["pragma"], None  # reqHeader["expires"]
+                   , None  # reqHeader["last_modified"]
+                   , reqHeader["host"])
+            mycursor.execute(sql, val)
+            resHeaderID = mycursor.lastrowid  # Keeping the id of the created row
+
+            # Constructing and Inserting a Header row
+            resHeader = entry["ResHeaders"]
+            sql = "INSERT INTO `mydtbs`.`Header` ( `content_type`, `age`, `cache_control`, `pragma`, `expires`, `last_modified`, `host`) VALUES(%s,%s,%s,%s,%s,%s,%s);"
+            val = (resHeader["content_type"], if_empty_string_then_none(resHeader["age"]), resHeader["cache_control"],
+                   resHeader["pragma"], None  # resHeader["expires"]
+                   , None  # resHeader["last_modified"]
+                   , resHeader["host"])
+            mycursor.execute(sql, val)
+            resHeaderID = mycursor.lastrowid  # Keeping the id of the created row
+
+            mycursor.execute("SELECT * FROM Ip WHERE ip=%s",
+                             (entry["serverIPAddress"],))
+
+            if len(mycursor.fetchall()) == 0:
+                # Constructing and Inserting an IP row
+                sql = "INSERT INTO `mydtbs`.`Ip` (`ip`) VALUES (%s)"
+                val = (entry["serverIPAddress"],)
+                mycursor.execute(sql, val)
+
+            # Constructing and Inserting an Entry row
+            sql = """INSERT INTO `mydtbs`.`Entry` (`email`, `serverIPAddress`, `reqHeader`, `resHeader`, `method`, `startedDateTime`, `wait`, `url`, `status`, `statusText`, `day`)
+                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);"""
+            val = (email, entry["serverIPAddress"], resHeaderID, resHeaderID, entry["method"],
+                   clean_datetime(entry["startedDateTime"]), entry["timings"],
+                   entry["url"].split(("?"), 1)[0], entry["status"], entry["statusText"], "monday")
+            mycursor.execute(sql, val)
+
+        # Commit to the database so our inserted data gets saved permanently
+        self.mydb.commit()
+        print("Data Inserted Successfully!")
 
 
-# db = MongoDB()
-
-# x = db.user_exists({"name": "nikos", "password": "1234"})
-
-# y = db.create_user({"name": "nikos", "password": "1234"})
-
-#   PUSH NEW ENTRIES OF USER
-# db.everything.update({ name: "loukas"} , { $push : { entries : { $each [ { hello: "hey"}, {yo: "sup"} ]  }} )
+def clean_datetime(datetime):
+    date = datetime.split("T", 1)[0]
+    time = datetime.split("T", 1)[1].split("Z", 1)[0][0:-4]
+    return date + " " + time
 
 
-# with open('/home/spectator/Desktop/test (2).json') as json_file:
-#     data = json.load(json_file)
+def if_empty_string_then_none(string):
+    if len(string) == 0:
+        return None
+    return string
 
-# print(data["new_json"])
+#{"serverIPAddress":"104.248.50.87","startedDateTime":"2020-11-22T22:30:24.913Z","timings":218.69900000024336,"method":"GET","url":"https://vuejs.org/","ReqHeaders":{"content_type":"","cache_control":""},"status":200,"statusText":"","ResHeaders":{"content_type":"","cache_control":"public, max-age=0, must-revalidate"}}
 
-# mycol.update({"name": "loukas"}, {
-#     "$push": {"entries": {"$each": data["new_json"]}}})
 
-# ips = mycol.aggregate([
-#     {"$match": {"name": "loukas"}},
-#     {"$unwind": "$entries"},
-#     {"$project": {"entries.serverIPAddress": 1}},
-#     {"$group": {"_id": "$entries.serverIPAddress", "count": {"$sum": 1}}}
-# ])
+db = MySQL()
 
-# for ip in ips:
-#     print(ip)
+db.insert_data("dlp@gmail.com")
+
+db.create_user({"email": "e@ppp.com", "username": "yoyo",
+                "password": "password", "ip": "1.1.1.1", "isp": "Wind"})
+
+# print(clean_datetime("2020-11-22T22:30:24.913Z"))

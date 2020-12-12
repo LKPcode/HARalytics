@@ -35,14 +35,15 @@ def login():
 
 
 @app.route("/upload", methods=["POST"])
-@authentication_required
+# @authentication_required
 def upload_data():
     data = request.json
+    print(data["new_json"][0])
     try:
-        db.insert_entries(request.user, data["new_json"])
+        #db.insert_entries(request.user, data["new_json"])
         return jsonify({"msg": "upload was succesfull"}), 200
     except:
-        return jsonify({"msg": "JSON data does not have the right structure"}), 401
+        return jsonify({"msg": "JSON data does not have the right structure"}), 404
 
 # @app.route('/upload', methods=['POST'])
 # @authentication_required
