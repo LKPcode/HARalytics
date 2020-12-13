@@ -1,5 +1,8 @@
+import re
+import datetime
 import json
 import mysql.connector
+from IPrequest import get_ips_data_array
 
 # Difine the Database Class
 
@@ -33,7 +36,6 @@ class MySQL:
 
     def user_exists(self, user):
         mycursor = self.mydb.cursor()
-
         mycursor.execute("SELECT * from User WHERE email=%s", (user["email"],))
         if len(mycursor.fetchall()) > 0:
             return True
@@ -55,22 +57,34 @@ class MySQL:
             # Constructing and Inserting a Header row
             reqHeader = entry["ReqHeaders"]
             sql = "INSERT INTO `mydtbs`.`Header` ( `content_type`, `age`, `cache_control`, `pragma`, `expires`, `last_modified`, `host`) VALUES(%s,%s,%s,%s,%s,%s,%s);"
-            val = (reqHeader["content_type"], if_empty_string_then_none(reqHeader["age"]), reqHeader["cache_control"],
-                   reqHeader["pragma"], None  # reqHeader["expires"]
-                   , None  # reqHeader["last_modified"]
-                   , reqHeader["host"])
+            val = (
+                if_empty_string_then_none(reqHeader["content_type"]),
+                if_empty_string_then_none(reqHeader["age"]),
+                if_empty_string_then_none(reqHeader["cache_control"]),
+                if_empty_string_then_none(reqHeader["pragma"]),
+                modify_expires_date(reqHeader["expires"]),
+                None,  # reqHeader["last_modified"]
+                if_empty_string_then_none(reqHeader["host"]))
+
             mycursor.execute(sql, val)
-            resHeaderID = mycursor.lastrowid  # Keeping the id of the created row
+            reqHeaderID = mycursor.lastrowid  # Keeping the id of the created row
 
             # Constructing and Inserting a Header row
             resHeader = entry["ResHeaders"]
             sql = "INSERT INTO `mydtbs`.`Header` ( `content_type`, `age`, `cache_control`, `pragma`, `expires`, `last_modified`, `host`) VALUES(%s,%s,%s,%s,%s,%s,%s);"
-            val = (resHeader["content_type"], if_empty_string_then_none(resHeader["age"]), resHeader["cache_control"],
-                   resHeader["pragma"], None  # resHeader["expires"]
-                   , None  # resHeader["last_modified"]
-                   , resHeader["host"])
+            val = (
+                if_empty_string_then_none(resHeader["content_type"]),
+                if_empty_string_then_none(resHeader["age"]),
+                if_empty_string_then_none(resHeader["cache_control"]),
+                if_empty_string_then_none(resHeader["pragma"]),
+                modify_expires_date(resHeader["expires"]),
+                None,  # resHeader["last_modified"]
+                if_empty_string_then_none(resHeader["host"]))
+
             mycursor.execute(sql, val)
             resHeaderID = mycursor.lastrowid  # Keeping the id of the created row
+
+            entry["serverIPAddress"] = clean_ip(entry["serverIPAddress"])
 
             mycursor.execute("SELECT * FROM Ip WHERE ip=%s",
                              (entry["serverIPAddress"],))
@@ -81,23 +95,67 @@ class MySQL:
                 val = (entry["serverIPAddress"],)
                 mycursor.execute(sql, val)
 
+            if len(entry["serverIPAddress"]) == 0:
+                continue
+
             # Constructing and Inserting an Entry row
-            sql = """INSERT INTO `mydtbs`.`Entry` (`email`, `serverIPAddress`, `reqHeader`, `resHeader`, `method`, `startedDateTime`, `wait`, `url`, `status`, `statusText`, `day`)
-                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);"""
-            val = (email, entry["serverIPAddress"], resHeaderID, resHeaderID, entry["method"],
-                   clean_datetime(entry["startedDateTime"]), entry["timings"],
-                   entry["url"].split(("?"), 1)[0], entry["status"], entry["statusText"], "monday")
+            sql = """INSERT INTO `mydtbs`.`Entry` (`email`, `serverIPAddress`, `reqHeader`, `resHeader`, `method`, `startedDateTime`, `wait`, `url`,  `domain`,`is_page`, `status`, `statusText`, `day`)
+                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);"""
+            val = (email,
+                   entry["serverIPAddress"],
+                   reqHeaderID,
+                   resHeaderID,
+                   entry["method"],
+                   clean_datetime(entry["startedDateTime"]),
+                   entry["timings"],
+                   entry["url"].split(("?"), 1)[0],
+                   get_domain(entry["url"]),
+                   url_is_page(entry["url"]),
+                   entry["status"],
+                   entry["statusText"],
+                   get_day_of_week(clean_datetime(entry["startedDateTime"])))
+
             mycursor.execute(sql, val)
 
         # Commit to the database so our inserted data gets saved permanently
         self.mydb.commit()
+        self.get_ip_data()
         print("Data Inserted Successfully!")
 
+    def get_ip_data(self):
+        mycursor = self.mydb.cursor()
+        mycursor.execute("SELECT * FROM Ip WHERE city IS NULL;")
 
-def clean_datetime(datetime):
-    date = datetime.split("T", 1)[0]
-    time = datetime.split("T", 1)[1].split("Z", 1)[0][0:-4]
-    return date + " " + time
+        ips = []
+        for row in mycursor.fetchall():
+            ips.append(row[0])
+
+        ip_data = get_ips_data_array(ips)
+
+        for res in ip_data:
+            print(res)
+            if len(res) > 1:
+                mycursor.execute("UPDATE Ip SET country=%s, city=%s, x=%s, y=%s WHERE ip=%s",
+                                 (res["country_name"], res["city"],  res["latitude"], res["longitude"], res["ip"]))
+
+        self.mydb.commit()
+
+        print("New IPs where updated")
+
+
+# DATA CLEANING FUNCTIONS
+
+def clean_datetime(dt):
+    date = dt[0:10]
+    time = dt[11:19]
+    dat = date + " " + time
+    return dat
+
+
+def get_day_of_week(dat):
+    weekday = datetime.datetime.strptime(
+        dat, "%Y-%m-%d %H:%M:%S").strftime("%A")
+    return weekday.lower()
 
 
 def if_empty_string_then_none(string):
@@ -105,14 +163,73 @@ def if_empty_string_then_none(string):
         return None
     return string
 
-#{"serverIPAddress":"104.248.50.87","startedDateTime":"2020-11-22T22:30:24.913Z","timings":218.69900000024336,"method":"GET","url":"https://vuejs.org/","ReqHeaders":{"content_type":"","cache_control":""},"status":200,"statusText":"","ResHeaders":{"content_type":"","cache_control":"public, max-age=0, must-revalidate"}}
+
+def modify_expires_date(dt):
+    # Expires field converter
+    if len(dt) < 5:
+        return None
+    return datetime.datetime.strptime(
+        dt, '%a, %d %b %Y %H:%M:%S GMT').strftime('%Y-%m-%d %H:%M:%S')
+
+
+# Fri, 19 Nov 2021 22:11:49 GMT
+
+# {"serverIPAddress":"104.248.50.87","startedDateTime":"2020-11-22T22:30:24.913Z","timings":218.69900000024336,"method":"GET","url":"https://vuejs.org/","ReqHeaders":{"content_type":"","cache_control":""},"status":200,"statusText":"","ResHeaders":{"content_type":"","cache_control":"public, max-age=0, must-revalidate"}}
 
 
 # db = MySQL()
 
+# db.get_ip_data()
 # db.insert_data("dlp@gmail.com")
 
 # db.create_user({"email": "e@ppp.com", "username": "yoyo",
 #                 "password": "password", "ip": "1.1.1.1", "isp": "Wind"})
 
 # print(clean_datetime("2020-11-22T22:30:24.913Z"))
+
+
+# clean = clean_datetime("2020-11-22T22:30:24.913Z")
+# print(clean)
+# get_day_of_week(clean)
+
+# # Load the test.json data into the "data" variable
+# with open('./uploads/test2.json') as json_file:
+#     data = json.load(json_file)
+#     for entry in data["new_json"]:
+#         resHeader = entry["ResHeaders"]
+#         if resHeader["last_modified"] != "":
+#             print(resHeader["last_modified"])
+
+def url_is_page(url):
+    obj = re.match(r"(.*//[a-z\.]*)/?([^.]*)(\.html|\.asp|\.jsp|\.php|).*",
+                   url)
+
+    if obj is None:
+        return "false"
+
+    if obj.group(3) != "":
+        return "true"
+    elif obj.group(2) == "" and obj.group(3) == "":
+        return "true"
+    return "false"
+
+
+def get_domain(url):
+    obj = re.match(r".*//([a-z\.]*)/?.*",
+                   url)
+    return obj.group(1)
+
+
+def clean_ip(ip):
+    obj = re.match(r"\[(.*)\]", ip)
+    if obj:
+        ip = obj.group(1)
+    return ip
+
+
+# print(url_is_page("https://vuejs.org"))
+
+# print(get_domain("https://vuejs.org/djsk"))
+
+
+# print(clean_ip("[2a00:1450:4001:824::200e]"))

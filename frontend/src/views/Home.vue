@@ -144,7 +144,7 @@ export default {
             "token " + res.data.token;
 
           this.$store.user = this.user.name;
-          this.$router.push("about");
+          this.$router.push("upload");
         })
         .catch(() => this.errors.push("Login was unsuccessful")); //wrong credentials
     },

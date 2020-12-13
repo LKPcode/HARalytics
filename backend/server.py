@@ -11,7 +11,6 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = "./uploads"
 db = MySQL()
 
-
 # url_for('static', filename='style.css')
 
 
@@ -41,12 +40,12 @@ def login():
 @authentication_required
 def upload_data():
     data = request.json
-    # print(data["new_json"][0])
     try:
         db.insert_data(data, request.user)
         return jsonify({"msg": "upload was succesfull"}), 200
-    except:
-        return jsonify({"msg": "JSON data does not have the right structure"}), 400
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"msg": e}), 500
 
 
 # @app.route('/upload', methods=['POST'])

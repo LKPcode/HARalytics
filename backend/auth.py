@@ -23,7 +23,8 @@ def authentication_required(fn):
                 print(token)
                 request.user = decode_jwt(str.encode(token))
                 return fn(*args, **kwargs)
-            except:
+            except Exception as e:
+                print(e)
                 return jsonify({"msg": "Token was not valid"}), 401
         else:
             return jsonify({"msg": "Token was not provided"}), 401
