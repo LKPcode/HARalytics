@@ -31,7 +31,16 @@ class MySQL:
                      user["password"], user["isp"], "0")
 
         mycursor.execute(entry_sql, entry_val)
-        print(mycursor.lastrowid)
+
+        mycursor.execute("SELECT * FROM Ip WHERE ip=%s",
+                         (user["ip"],))
+
+        if len(mycursor.fetchall()) == 0:
+            # Constructing and Inserting an IP row
+            sql = "INSERT INTO `mydtbs`.`Ip` (`ip`) VALUES (%s)"
+            val = (user["ip"],)
+            mycursor.execute(sql, val)
+
         self.mydb.commit()
 
     def user_exists(self, user):
@@ -108,7 +117,7 @@ class MySQL:
                    entry["method"],
                    clean_datetime(entry["startedDateTime"]),
                    entry["timings"],
-                   entry["url"].split(("?"), 1)[0],
+                   entry["url"].split(("?"), 1)[0][0:500],
                    get_domain(entry["url"]),
                    url_is_page(entry["url"]),
                    entry["status"],
@@ -133,7 +142,7 @@ class MySQL:
         ip_data = get_ips_data_array(ips)
 
         for res in ip_data:
-            print(res)
+
             if len(res) > 1:
                 mycursor.execute("UPDATE Ip SET country=%s, city=%s, x=%s, y=%s WHERE ip=%s",
                                  (res["country_name"], res["city"],  res["latitude"], res["longitude"], res["ip"]))
@@ -142,8 +151,47 @@ class MySQL:
 
         print("New IPs where updated")
 
+    def get_heatmap_data_of_user(self, email):
+
+        mycursor = self.mydb.cursor(dictionary=True)
+
+        sql = "select distinct Entry.domain , Ip.ip , Ip.country,  Ip.city, Ip.x, Ip.y  from Entry JOIN Ip ON Entry.serverIPAddress = Ip.ip where Entry.is_page='true' AND Entry.email=%s;"
+        val = (email,)
+
+        mycursor.execute(sql, val)
+
+        data = mycursor.fetchall()
+
+        return data
+
+    def get_server_graph_data(self):
+
+        mycursor = self.mydb.cursor(dictionary=True)
+
+        mycursor.execute(
+            "SELECT User.email, User.ip , Ip.city as ip_city , Ip.x as ip_x , Ip.y as ip_y  from User left Join Ip on Ip.ip=User.ip;")
+        emails = mycursor.fetchall()
+
+        new_structure = []
+        for row in emails:
+            print("Emails: ", row["email"])
+            sql = "select count(User.email) as count, Entry.serverIPAddress, entry_ip.city as server_city,   entry_ip.x as server_x, entry_ip.y as server_y \
+                from User Join Entry on Entry.email=User.email \
+                left Join Ip on Ip.ip=User.ip  \
+                left Join Ip as entry_ip on entry_ip.ip=Entry.serverIPAddress \
+                where User.email=%s group by User.ip, Entry.serverIPAddress, Entry.email "
+
+            val = (row["email"],)
+            mycursor.execute(sql, val)
+            data = mycursor.fetchall()
+
+            new_structure.append({"servers": data, "user": row})
+
+        return new_structure
+
 
 # DATA CLEANING FUNCTIONS
+
 
 def clean_datetime(dt):
     date = dt[0:10]
@@ -178,7 +226,10 @@ def modify_expires_date(dt):
 
 
 # db = MySQL()
+# print(db.get_server_graph_data())
 
+
+# db.get_heatmap_data_of_user("simpleanon@tutanota.com")
 # db.get_ip_data()
 # db.insert_data("dlp@gmail.com")
 
@@ -215,7 +266,7 @@ def url_is_page(url):
 
 
 def get_domain(url):
-    obj = re.match(r".*//([a-z\.]*)/?.*",
+    obj = re.match(r".*//([a-z\.0-9\-]*)/?.*",
                    url)
     return obj.group(1)
 

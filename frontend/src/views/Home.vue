@@ -164,6 +164,9 @@ export default {
         .then((res) => {
           this.msg = res.data;
           this.$store.setToken(res.data.token);
+          this.$axios.defaults.headers.common["Authorization"] =
+            "token " + res.data.token;
+
           this.$store.user = this.user.name;
           this.$router.push("upload");
         })

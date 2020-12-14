@@ -17,7 +17,7 @@ export default {
     };
   },
   methods: {
-    setupLeafletMap: function () {
+    setupLeafletMap: function (data) {
       const map = L.map("mapContainer").setView(this.center, 1);
       L.tileLayer(
         "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
@@ -33,35 +33,21 @@ export default {
         }
       ).addTo(map);
 
-      L.heatLayer(
-        [
-          [50.5, 30.5, 1.0], // lat, lng, intensity
-          [52.6, 30.4, 1.0],
-          [51.5, 30.5, 1.0], // lat, lng, intensity
-          [51.6, 30.4, 1.0],
-          [52.5, 30.5, 1.0], // lat, lng, intensity
-          [50.6, 30.4, 1.0],
-          [53.5, 30.5, 1.0], // lat, lng, intensity
-          [50.6, 30.4, 1.0],
-          [54.5, 30.5, 1.0], // lat, lng, intensity
-          [50.6, 30.4, 1.0],
-          [51.5, 33.5, 1.0], // lat, lng, intensity
-          [50.6, 30.4, 1.0],
-          [50.5, 30.5, 1.0], // lat, lng, intensity
-          [54.6, 32.4, 1.0],
-          [50.5, 30.5, 1.0], // lat, lng, intensity
-          [50.6, 30.4, 1.0],
-          [50.5, 30.5, 1.0], // lat, lng, intensity
-          [50.6, 30.4, 1.0],
-          [50.5, 30.5, 1.0], // lat, lng, intensity
-          [50.6, 30.4, 1.0],
-        ],
-        { radius: 15, maxZoom: 5, max: 2 }
-      ).addTo(map);
+      L.heatLayer(data, { radius: 15, maxZoom: 3, max: 1 }).addTo(map);
     },
   },
   mounted() {
-    this.setupLeafletMap();
+    this.$axios
+      .get("http://127.0.0.1:5000/heatmap", {
+        headers: {
+          Authorization: `Token ${this.$store.token}`,
+        },
+      })
+      .then((res) => {
+        console.log(res.data);
+        this.setupLeafletMap(res.data);
+      })
+      .catch((err) => console.log(err.response));
   },
 };
 </script>

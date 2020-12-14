@@ -19,6 +19,7 @@ const store = Vue.observable({ authenticated: false, user: "",  state: "user", t
  setToken(token){
   localStorage.setItem("token", token)
   this.authenticated = true
+  this.token = token
 } })
 
 let token = localStorage.getItem("token");

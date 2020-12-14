@@ -123,7 +123,11 @@ export default {
         })
         .then((res) => {
           console.log(res.data);
-          this.$router.push("/");
+          if (this.$store.state == "admin") {
+            this.$router.push("/admin");
+          } else {
+            this.$router.push("/user");
+          }
         })
         .catch((err) => console.log(err.response));
     },
