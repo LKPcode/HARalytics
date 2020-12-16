@@ -96,9 +96,15 @@ export default {
       };
 
       for (let index in headers) {
-        if (headers[index].name == "content-type") {
+        if (
+          headers[index].name == "content-type" ||
+          headers[index].name == "Content-Type"
+        ) {
           new_headers.content_type = headers[index].value;
-        } else if (headers[index].name == "cache-control") {
+        } else if (
+          headers[index].name == "cache-control" ||
+          headers[index].name == "Cache-Control"
+        ) {
           new_headers.cache_control = headers[index].value;
         } else if (headers[index].name == "pragma") {
           new_headers.pragma = headers[index].value;
@@ -106,9 +112,15 @@ export default {
           new_headers.expires = headers[index].value;
         } else if (headers[index].name == "age") {
           new_headers.age = headers[index].value;
-        } else if (headers[index].name == "last_modified") {
+        } else if (
+          headers[index].name == "last-modified" ||
+          headers[index].name == "Last-Modified"
+        ) {
           new_headers.last_modified = headers[index].value;
-        } else if (headers[index].name == "host") {
+        } else if (
+          headers[index].name == "host" ||
+          headers[index].name == "Host"
+        ) {
           new_headers.host = headers[index].value;
         }
       }

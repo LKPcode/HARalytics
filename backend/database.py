@@ -1,3 +1,6 @@
+from rich import print
+from rich import pretty
+import dateutil.parser as ps
 import re
 import datetime
 import json
@@ -65,14 +68,23 @@ class MySQL:
 
             # Constructing and Inserting a Header row
             reqHeader = entry["ReqHeaders"]
-            sql = "INSERT INTO `mydtbs`.`Header` ( `content_type`, `age`, `cache_control`, `pragma`, `expires`, `last_modified`, `host`) VALUES(%s,%s,%s,%s,%s,%s,%s);"
+            dirct = clean_cache_control(reqHeader["cache_control"])
+            sql = "INSERT INTO `mydtbs`.`Header` ( `content_type`, `age`, `cache_control`,`private`, `public`, `immutable`, `no-cache`, `no-store`, `max-age`, `max-stale`, `min-fresh`, `pragma`, `expires`, `last_modified`, `host`) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);"
             val = (
                 if_empty_string_then_none(reqHeader["content_type"]),
                 if_empty_string_then_none(reqHeader["age"]),
                 if_empty_string_then_none(reqHeader["cache_control"]),
+                dirct["private"],
+                dirct["public"],
+                dirct["immutable"],
+                dirct["no-cache"],
+                dirct["no-store"],
+                dirct["max-age"],
+                dirct["max-stale"],
+                dirct["min-fresh"],
                 if_empty_string_then_none(reqHeader["pragma"]),
                 modify_expires_date(reqHeader["expires"]),
-                None,  # reqHeader["last_modified"]
+                modify_expires_date(reqHeader["last_modified"]),
                 if_empty_string_then_none(reqHeader["host"]))
 
             mycursor.execute(sql, val)
@@ -80,14 +92,24 @@ class MySQL:
 
             # Constructing and Inserting a Header row
             resHeader = entry["ResHeaders"]
-            sql = "INSERT INTO `mydtbs`.`Header` ( `content_type`, `age`, `cache_control`, `pragma`, `expires`, `last_modified`, `host`) VALUES(%s,%s,%s,%s,%s,%s,%s);"
+            dirct = clean_cache_control(resHeader["cache_control"])
+
+            sql = "INSERT INTO `mydtbs`.`Header` ( `content_type`, `age`, `cache_control`,`private`, `public`, `immutable`, `no-cache`, `no-store`, `max-age`, `max-stale`, `min-fresh`, `pragma`, `expires`, `last_modified`, `host`) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);"
             val = (
                 if_empty_string_then_none(resHeader["content_type"]),
                 if_empty_string_then_none(resHeader["age"]),
                 if_empty_string_then_none(resHeader["cache_control"]),
+                dirct["private"],
+                dirct["public"],
+                dirct["immutable"],
+                dirct["no-cache"],
+                dirct["no-store"],
+                dirct["max-age"],
+                dirct["max-stale"],
+                dirct["min-fresh"],
                 if_empty_string_then_none(resHeader["pragma"]),
                 modify_expires_date(resHeader["expires"]),
-                None,  # resHeader["last_modified"]
+                modify_expires_date(resHeader["last_modified"]),
                 if_empty_string_then_none(resHeader["host"]))
 
             mycursor.execute(sql, val)
@@ -212,15 +234,16 @@ def if_empty_string_then_none(string):
     return string
 
 
+# Fri, 19 Nov 2021 22:11:49 GMT
 def modify_expires_date(dt):
     # Expires field converter
     if len(dt) < 5:
         return None
-    return datetime.datetime.strptime(
-        dt, '%a, %d %b %Y %H:%M:%S GMT').strftime('%Y-%m-%d %H:%M:%S')
 
+    dt = ps.parse("19 Nov 2021 22:11:49 GMT", ignoretz=True)
 
-# Fri, 19 Nov 2021 22:11:49 GMT
+    return dt.strftime('%Y-%m-%d %H:%M:%S')
+
 
 # {"serverIPAddress":"104.248.50.87","startedDateTime":"2020-11-22T22:30:24.913Z","timings":218.69900000024336,"method":"GET","url":"https://vuejs.org/","ReqHeaders":{"content_type":"","cache_control":""},"status":200,"statusText":"","ResHeaders":{"content_type":"","cache_control":"public, max-age=0, must-revalidate"}}
 
@@ -284,3 +307,45 @@ def clean_ip(ip):
 
 
 # print(clean_ip("[2a00:1450:4001:824::200e]"))
+
+# print(modify_expires_date(" Fri, 19 Nov 2021 22:11:49 GMT"))
+
+
+# obj = re.match(r"(public)?.*(private)?.*(immutable)?.*(max-age)=(.*)?.*((stale-while-revalidate=)(.*))?.*",
+#                "public, private, immutable, max-age=31536000, stale-while-revalidate=6,")
+
+# print(obj)
+# print(obj.groups())
+
+
+def clean_cache_control(cache_control):
+
+    obj = re.match(
+        r"^(?=.*(private))?(?=.*(public))?(?=.*(immutable))?(?=.*(no-cache))?(?=.*(no-store))?(?=.*(max-age)=([0-9]*))?(?=.*(min-fresh)=([0-9]*))?(?=.*(max-stale)=([0-9]*))?.+",
+        cache_control)
+
+    directives = {
+        "private": None,
+        "public": None,
+        "immutable": None,
+        "no-cache": None,
+        "no-store": None,
+        "max-age": None,
+        "min-fresh": None,
+        "max-stale": None
+    }
+    if obj:
+
+        i = 1
+        for directive in directives.keys():
+            if obj.group(i):
+                directives[directive] = "true"
+            if obj.group(i) == "max-age":
+                i += 1
+                directives["max-age"] = obj.group(i)
+            if obj.group(i) == "min-fresh":
+                i += 1
+                directives["max-stale"] = obj.group(i)
+            i += 1
+
+    return directives
