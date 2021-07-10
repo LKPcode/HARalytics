@@ -81,6 +81,7 @@
 
 <script>
 import Particles from "../components/Particles.vue";
+
 export default {
   name: "Home",
   components: {
@@ -130,24 +131,36 @@ export default {
         return 0;
       }
 
-      console.log("login!!");
-      this.$axios
-        .post("http://127.0.0.1:5000/login", {
+      console.log("login!!", {
           email: this.user.email,
           name: this.user.name,
           password: this.user.password,
-        })
+        });
+
+  
+      this.$axios
+        .post("http://127.0.0.1:5000/login",
+        {
+          email: this.user.email,
+          name: this.user.name,
+          password: this.user.password,
+        }
+        )
         .then((res) => {
           this.msg = res.data;
-          this.$store.setToken(res.data.token);
+          console.log(res.data)
+          this.$store.setToken(res.data);
           this.$axios.defaults.headers.common["Authorization"] =
             "token " + res.data.token;
 
-          this.$store.user = this.user.name;
+          this.$store.user = res.data.user;
+          this.$store.state = res.data.state;
           this.$router.push("upload");
         })
         .catch(() => this.errors.push("Login was unsuccessful")); //wrong credentials
     },
+
+
     signup() {
       if (!this.inputIsCorrect()) {
         return 0;
@@ -170,7 +183,7 @@ export default {
           this.$store.user = this.user.name;
           this.$router.push("upload");
         })
-        .catch(() => (this.error = "Username already exists")); //wrong credentials
+        .catch(() => (this.error = "Username already exists")); 
     },
   },
 };

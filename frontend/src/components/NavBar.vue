@@ -13,7 +13,7 @@
         <li class="nav-item active">
           <a class="nav-link" @click="$router.push('user')">My Data</a>
         </li>
-        <li class="nav-item active">
+        <li v-if="state == 'admin'" class="nav-item active">
           <a class="nav-link" @click="$router.push('admin')">General Data</a>
         </li>
         <li class="nav-item active">
@@ -23,7 +23,7 @@
 
       <button
         class="btn btn-danger my-2 my-sm-0"
-        @click="$router.push('/')"
+        @click="logout();$router.push('/')"
         type="submit"
       >
         Log Out
@@ -35,6 +35,17 @@
 <script>
 export default {
   name: "NavBar",
+  data(){
+    return{
+      state: this.$store.state
+    }
+  },
+  methods:{
+    logout()
+    {
+      this.$store.logout()
+    }
+  }
 };
 </script>
 

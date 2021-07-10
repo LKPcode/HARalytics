@@ -1,4 +1,4 @@
-#!/home/spectator/Desktop/WEB/backend/venv/bin/python3
+#!/Users/spectator/Desktop/HARalytics/backend/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

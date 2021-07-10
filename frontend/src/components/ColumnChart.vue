@@ -16,12 +16,12 @@ export default {
     return {
       series: [
         {
-          data: [21, 22, 10, 28, 16],
+          data: [0,0,0,0],
         },
       ],
       chartOptions: {
         title: {
-          text: "Product Trends by Month",
+          text: "Number of Requests per Method",
           align: "center",
         },
         chart: {
@@ -48,11 +48,7 @@ export default {
         },
         xaxis: {
           categories: [
-            ["John", "Doe"],
-            ["Joe", "Smith"],
-            ["Jake", "Williams"],
-            "Amber",
-            ["Peter", "Brown"],
+ 
           ],
           labels: {
             style: {
@@ -65,5 +61,33 @@ export default {
       },
     };
   },
+  mounted(){
+    console.log("mounted column chart")
+     this.$axios
+      .get("http://127.0.0.1:5000/methods", {
+        headers: {
+          Authorization: `Token ${this.$store.token}`,
+        },
+      })
+      .then((res) => {
+        console.log("response",res.data);
+        this.series = [{
+                data: res.data.amounts,
+                
+            }]
+        this.chartOptions = {
+              xaxis :  {
+                  categories: res.data.methods,
+                
+                }
+            }
+
+
+      })
+      .catch((err) => console.log(err.response));
+
+
+    
+  }
 };
 </script>

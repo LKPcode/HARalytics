@@ -31,7 +31,7 @@ class MySQL:
         # Constructing and Inserting a User row
         entry_sql = "INSERT INTO `mydtbs`.`User` (`email`, `ip`, `username`, `password`, `ISP`, `admin`) VALUES (%s,%s,%s,%s,%s,%s);"
         entry_val = (user["email"], user["ip"], user["name"],
-                     user["password"], user["isp"], "0")
+                     user["password"], user["isp"], user["admin"])
 
         mycursor.execute(entry_sql, entry_val)
 
@@ -47,11 +47,12 @@ class MySQL:
         self.mydb.commit()
 
     def user_exists(self, user):
-        mycursor = self.mydb.cursor()
+        mycursor = self.mydb.cursor(dictionary=True)
         mycursor.execute("SELECT * from User WHERE email=%s", (user["email"],))
-        if len(mycursor.fetchall()) > 0:
-            return True
-        return False
+        result = mycursor.fetchall()
+        if len(result) > 0:
+            return result[0]
+        return None
 
     # Method to insert data, for now we load them from a file just for simplicity
 
@@ -167,7 +168,7 @@ class MySQL:
 
             if len(res) > 1:
                 mycursor.execute("UPDATE Ip SET country=%s, city=%s, x=%s, y=%s WHERE ip=%s",
-                                 (res["country_name"], res["city"],  res["latitude"], res["longitude"], res["ip"]))
+                                 (res["country"], res["city"],  res["lat"], res["lon"], res["query"]))
 
         self.mydb.commit()
 
@@ -210,6 +211,145 @@ class MySQL:
             new_structure.append({"servers": data, "user": row})
 
         return new_structure
+
+            #Admin 1
+
+    def count_users(self):  #admin 1.a
+        mycursor = self.mydb.cursor(dictionary=True)
+        mycursor.execute(
+            """
+                SELECT COUNT(User.email) AS user_counter
+                FROM User;
+            """)
+        response = mycursor.fetchall()
+        user_counter = response[0]['user_counter']
+        return user_counter
+
+    def entries_per_method(self):  #admin 1.b
+        mycursor = self.mydb.cursor(dictionary=True)
+        mycursor.execute(
+            """
+                SELECT  Entry.method,count(*) AS entries
+                FROM Entry
+                GROUP BY method;
+            """)
+        response = mycursor.fetchall()
+        return response
+
+    def entries_per_status(self):  #admin 1.c
+        mycursor = self.mydb.cursor(dictionary=True)
+        mycursor.execute(
+            """
+                SELECT  Entry.status,count(*) AS entries
+                FROM Entry
+                GROUP BY status;
+            """)
+        response = mycursor.fetchall()
+        return response
+
+    def count_domains(self):  #admin 1.d
+            mycursor = self.mydb.cursor(dictionary=True)
+            mycursor.execute(
+                """
+                    SELECT COUNT(DISTINCT Entry.domain) AS domain_counter
+                    FROM Entry;
+                """)
+            response = mycursor.fetchall()
+            domain_counter = response[0]['domain_counter']
+            return domain_counter
+
+
+    def count_providers(self):  #admin 1.e
+        mycursor = self.mydb.cursor(dictionary=True)
+        mycursor.execute(
+            """
+                SELECT COUNT(DISTINCT User.ISP) AS provider_counter
+                FROM User;
+            """)
+        response = mycursor.fetchall()
+        provider_counter = response[0]['provider_counter']
+        return provider_counter
+
+
+    def avg_entry_age_per_type(self):  #admin 1.f
+        mycursor = self.mydb.cursor(dictionary=True)
+        mycursor.execute(                                   #Cast float
+            """
+                SELECT Header.content_type, cast(avg(Header.age) as FLOAT) as average_object_age
+                FROM Header
+                WHERE age IS NOT NULL
+                GROUP BY content_type;
+            """)
+        response = mycursor.fetchall()
+        return response
+
+    #Admin 2
+
+    def request_timings(self, args):  #admin 2.a, 2.b, 2.c, 2.d
+        mycursor = self.mydb.cursor(dictionary=True)
+
+        mycursor.callproc('Proc2', args)
+
+        response = []
+        for result in mycursor.stored_results():
+            response.append(result.fetchall())
+
+        return response[0]
+
+    def ttl(self, args):  #admin 3.a
+        mycursor = self.mydb.cursor(dictionary=True)
+
+        mycursor.callproc('Proc3a', args)
+
+        response = []
+        for result in mycursor.stored_results():
+            response.append(result.fetchall())
+
+        return response[0]
+
+    def max_staled_or_min_fresh(self, args):  #admin 3.b
+        mycursor = self.mydb.cursor(dictionary=True)
+
+        mycursor.callproc('Proc3b', args)
+
+        response = []
+        for result in mycursor.stored_results():
+            response.append(result.fetchall())
+
+        return response[0][0]["max_stale_or_min_fresh"]
+
+    def cacheability(self, args):  #admin 3.c
+        mycursor = self.mydb.cursor(dictionary=True)
+
+        mycursor.callproc('Proc3c', args)
+
+        response = []
+        for result in mycursor.stored_results():
+            response.append(result.fetchall())
+
+        return response[0][0]["cashed"] 
+
+    def distinct_attributes(self):  #admin 2
+            mycursor = self.mydb.cursor(dictionary=True)
+            mycursor.callproc('Proc2_da')
+
+            response = {'ISP': [], 'method': [],'content_type': []}
+            for count,result in enumerate(mycursor.stored_results()):
+                dicts = result.fetchall()
+               
+                if count == 0:
+                    key='ISP'
+                elif count ==1:
+                    key='method'
+                elif count ==2:
+                    key = 'content_type'
+                else: print("Something went wrong")
+
+                for dict in dicts:
+                    if dict[key] is not None:
+                        response[key].append(dict[key])
+            return response
+
 
 
 # DATA CLEANING FUNCTIONS
@@ -349,3 +489,8 @@ def clean_cache_control(cache_control):
             i += 1
 
     return directives
+
+
+# db = MySQL()
+
+# data = db.entries_per_method()

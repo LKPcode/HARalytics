@@ -1,19 +1,20 @@
 <template>
   <div id="chart">
+    <div class="row text-center font-weight-bold">
+  <div class="col-sm">Max-Min: {{max_min}} </div>
+  <div class="col-sm">Cacheability: {{cacheability}} </div>
+ 
+</div>
     <apexchart
       ref="chart"
-      type="line"
+      type="bar"
       height="350"
       :options="chartOptions"
       :series="series"
     ></apexchart>
 
-        Methods
-      <multiselect v-model="selections.methods.value" :options="selections.methods.options" :multiple="true" :close-on-select="false"></multiselect>
-        Content Types
+      Content Types
       <multiselect v-model="selections.content_types.value" :options="selections.content_types.options" :multiple="true" :close-on-select="false"></multiselect>
-        weekdays
-      <multiselect v-model="selections.weekdays.value" :options="selections.weekdays.options" :multiple="true" :close-on-select="false"></multiselect>
         ISPs
       <multiselect v-model="selections.isps.value" :options="selections.isps.options" :multiple="true" :close-on-select="false"></multiselect>
 
@@ -27,29 +28,24 @@ import Multiselect from 'vue-multiselect'
 
 
 export default {
-  name: "Timings",
+  name: "HeaderAnalysis",
   components: {
     apexchart: VueApexCharts,
     Multiselect
   },
   data() {
     return {
+      max_min:0,
+      cacheability:0,
       selections:{
-        methods:{
-          value:null,
-          options: ['list', 'of', 'options']
-        },
+       
         content_types:{
           value:null,
-          options: ['list', 'of', 'options']
-        },
-        weekdays:{
-          value:null,
-          options: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+          options: ['list', 'of', 'font/woff2']
         },
         isps:{
           value:null,
-          options: ['list', 'of', 'options']
+          options: ["Wind"]
         }
       },
       series: [
@@ -83,39 +79,44 @@ export default {
           },
         },
         xaxis: {
-          categories: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+          categories: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
         },
       },
     };
   },
   methods:{
     filter(filters){
+      console.log("filters: ", filters)
       this.$axios
-      .post("http://127.0.0.1:5000/timings",filters, {
+      .post("http://127.0.0.1:5000/header-analytics",filters, {
         headers: {
           Authorization: `Token ${this.$store.token}`,
         },
       })
       .then((res) => {
-        console.log("response",res.data);
+        console.log("response header",res.data);
         let series = [{
           name: "Age",
-          data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+          data: res.data.ttl.amount
         }]
-        
+        let chartOptions = {
+              xaxis :  {
+                  categories: res.data.ttl.age,
+                
+                }
+            }
        
-        for(let i=0; i<res.data.length; i++){
-          series[0].data[res.data[i].hours] = res.data[i].time;
-        }
+        
     
-     
-       this.series = series
-    
+        this.chartOptions = chartOptions
+        this.series = series
+        this.max_min = res.data.max_min
+        this.cacheability = res.data.cacheability
 
       })
       .catch((err) => console.log(err.response)); 
     },
-      fillOptions(){
+  fillOptions(){
      this.$axios
       .get("http://127.0.0.1:5000/all-options",{
         headers: {
@@ -126,21 +127,16 @@ export default {
         console.log("response options",res.data);
         this.selections.content_types.options = res.data.content_type
         this.selections.isps.options = res.data.ISP
-        this.selections.methods.options = res.data.method
-
-
 
       })
       .catch((err) => console.log(err.response)); 
   },
-  },
+    },
   mounted(){
         console.log("mounted scatter chart")
         this.filter(this.selections)
-        this.selections.methods.options = ["ok", "not ok", "whatever"]
         this.fillOptions()
        
-     
 
     
     

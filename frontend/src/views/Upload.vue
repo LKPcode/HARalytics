@@ -3,8 +3,9 @@
     <nav-bar />
     <div class="uploadArea">
       <div>
-        <h4>Select a HAR file for Upload.</h4>
+        <h4>Select a HAR file for Upload. {{authenticated}} </h4>
         <h6>{{ filename }}</h6>
+         <h6>Hello {{ username }} state: {{state}} </h6>
         <label class="label onHover"
           ><input
             hidden
@@ -47,6 +48,9 @@ export default {
   },
   data() {
     return {
+      authenticated: this.$store.authenticated,
+      username: this.$store.user,
+      state: this.$store.state,
       json: {},
       original: {},
       headers: {},

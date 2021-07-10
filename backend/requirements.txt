@@ -1,0 +1,4 @@
+Flask
+PyJWT==v1.7.1
+python-dateutil
+mysql-connector-python

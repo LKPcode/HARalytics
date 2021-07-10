@@ -9,23 +9,23 @@
 import VueApexCharts from "vue-apexcharts";
 
 export default {
-  name: "PieChart",
+  name: "PieChartContent",
   components: {
     apexchart: VueApexCharts,
   },
   data() {
     return {
-      series: [44, 55, 13, 43, 22],
+      series: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
       chartOptions: {
          title: {
-          text: "Number of Requests per Response code",
+          text: "Number of Requests per Content-Type",
           align: "center",
         },
         chart: {
           width: 380,
           type: "pie",
         },
-        labels: ["Team A", "Team B", "Team C", "Team D", "Team E"],
+        labels: [1,2,3,4,5,6,7],
         responsive: [
           {
             breakpoint: 480,
@@ -43,22 +43,21 @@ export default {
     };
   },
   mounted(){
-        console.log("mounted pie chart")
+        console.log("mounted pie chart content type")
      this.$axios
-      .get("http://127.0.0.1:5000/status", {
+      .get("http://127.0.0.1:5000/content-type", {
         headers: {
           Authorization: `Token ${this.$store.token}`,
         },
       })
       .then((res) => {
-        console.log("response",res.data);
+        console.log("response types",res.data);
         this.series =  res.data.entries
         this.chartOptions = {
-              labels : res.data.statuses,
-              
+              labels : res.data.types,
             }
 
-
+       
       })
       .catch((err) => console.log(err.response));
 

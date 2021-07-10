@@ -1,13 +1,15 @@
 <template>
   <div>
     <nav-bar />
-    <div class="container">
-      <div class="row">
-        <div class="col-sm card m-3 p-3">
-          <h2 class="text-center">256</h2>
-        </div>
-        <div class="col-sm card m-3"></div>
+    <div class="container ">
+          
+      <div class="row text-center font-weight-bold mt-3">
+        <div class="col-sm">Number of Entries:</div>
+        <div class="col-sm">Last Upload: </div>
+       
       </div>
+
+
 
       <div class="row">
         <div class="col-sm card m-3">
