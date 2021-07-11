@@ -4,6 +4,7 @@ import dateutil.parser as ps
 import re
 import datetime
 import json
+import math
 import mysql.connector
 from IPrequest import get_ips_data_array
 
@@ -196,19 +197,40 @@ class MySQL:
         emails = mycursor.fetchall()
 
         new_structure = []
+        max_count = 0
         for row in emails:
             print("Emails: ", row["email"])
-            sql = "select count(User.email) as count, Entry.serverIPAddress, entry_ip.city as server_city,   entry_ip.x as server_x, entry_ip.y as server_y \
-                from User Join Entry on Entry.email=User.email \
-                left Join Ip on Ip.ip=User.ip  \
-                left Join Ip as entry_ip on entry_ip.ip=Entry.serverIPAddress \
-                where User.email=%s group by User.ip, Entry.serverIPAddress, Entry.email "
+            sql = """
+            select CONVERT(SUM(count) , UNSIGNED) as count, serverIPAddress, server_city, server_x, server_y from (select count(User.email) as count, Entry.serverIPAddress, entry_ip.city as server_city, entry_ip.x as server_x, entry_ip.y as server_y \
+            from User Join Entry on Entry.email=User.email 
+            left Join Ip on Ip.ip=User.ip  
+            left Join Ip as entry_ip on entry_ip.ip=Entry.serverIPAddress 
+            where User.email=%s group by User.ip, Entry.serverIPAddress, Entry.email) as ok
+            group by ok.server_x, ok.server_y order by count DESC;
+            """
 
             val = (row["email"],)
             mycursor.execute(sql, val)
             data = mycursor.fetchall()
+            print(row["email"])
+            print(data)
+            #Find maximum count so that we can normalize it for visualization
+            
+            if len(data) > 0 and data[0]["count"] > max_count:
+                max_count = data[0]["count"]
 
             new_structure.append({"servers": data, "user": row})
+
+        print("MAX COUNT",max_count)
+        # Normalize Count values and assign them a color
+        for i in range(len(new_structure)):
+            for j in range(len(new_structure[i]["servers"])):
+                normalized = math.ceil(8 * new_structure[i]["servers"][j]["count"] / max_count ) + 1
+                new_structure[i]["servers"][j]["count"] = normalized
+                print(new_structure[i]["servers"][j]["count"])
+                if normalized < 3: new_structure[i]["servers"][j]["color"] = "#33cc00"
+                elif normalized < 6: new_structure[i]["servers"][j]["color"] = "#2db300"
+                else: new_structure[i]["servers"][j]["color"] = "#269900"
 
         return new_structure
 

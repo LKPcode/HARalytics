@@ -10,8 +10,8 @@
           [user.user.ip_x, user.user.ip_y],
           [server.server_x, server.server_y],
         ]"
-        :color="polyline.color"
-        :weight="2"
+        :color="server.color"
+        :weight="server.count"
       ></l-polyline>
 
       <l-circle-marker
@@ -82,7 +82,7 @@ export default {
           [47.41322, -1.0482],
           [39.616668701171875, 19.91659927368164],
         ],
-        color: "green",
+        color: "#666666",
       },
       show: true,
       data: [],
@@ -96,7 +96,7 @@ export default {
         },
       })
       .then((res) => {
-        console.log(res.data);
+        console.log("graph server", res.data);
 
         this.data = res.data;
       })

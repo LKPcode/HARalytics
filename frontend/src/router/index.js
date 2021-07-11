@@ -4,7 +4,7 @@ import Home from '../views/Home.vue'
 import Admin from '../views/Admin.vue'
 import User from '../views/User.vue'
 import Auth from '../views/Auth.vue'
-
+import Update from '../views/Update.vue'
 
 Vue.use(VueRouter)
 
@@ -33,6 +33,11 @@ const routes = [
     path: '/auth',
     name: 'Auth',
     component: Auth
+  },
+  {
+    path: '/update',
+    name: 'Update',
+    component: Update
   },
 ]
 

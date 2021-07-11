@@ -1,26 +1,26 @@
 <template>
   <div class="home">
-    <particles bg="#368f8b"/>
+    <particles bg="#220000"/>
     <div class="login-form">
       <form @submit.prevent>
         <div class="avatar">
           <img src="../assets/logo.png" alt="Avatar" />
         </div>
         <h2 v-if="login_form" class="text-center">Member Login</h2>
-        <h2 v-else class="text-center">Create Account</h2>
+        <h2 v-else class="text-center">Update Account</h2>
         <div v-if="errors.length != 0" class="warning">
           <li v-for="(error, index) in errors" :key="index">{{ error }}</li>
         </div>
-        <div class="form-group">
+       <div class="form-group">
           <input
             v-model="user.email"
             type="email"
             class="form-control"
             name="email"
             placeholder="Email"
-            required="required"
+            disabled
           />
-        </div>
+        </div> 
         <div v-if="!login_form" class="form-group">
           <input
             v-model="user.name"
@@ -60,19 +60,19 @@
             type="submit"
             class="btn btn-primary btn-lg btn-block"
           >
-            <div v-if="!login_form">Sign in</div>
+            <div v-if="!login_form">Update</div>
             <div v-else>Log In</div>
           </button>
         </div>
         <div class="bottom-action clearfix">
           <p v-if="login_form" class="text-center link">
-            Already have an account?
+            Don't have an account?
             <a @click="toggle()">Sign up here!</a>
           </p>
-          <p v-else class="text-center link">
-            Don't have an account?
+          <!-- <p v-else class="text-center link">
+            Already have an account?
             <a @click="toggle()">Log in here!</a>
-          </p>
+          </p> -->
         </div>
       </form>
     </div>
@@ -83,19 +83,22 @@
 import Particles from "../components/Particles.vue";
 
 export default {
-  name: "Home",
+  name: "Update",
   components: {
     Particles,
   },
   data() {
     return {
-      login_form: true,
+      login_form: false,
       msg: "",
       user: { email: "", name: "", password: "", password_2: "" },
       errors: [],
     };
   },
-  
+  mounted(){
+      this.user.name = this.$store.user,
+      this.user.email = this.$store.email
+  },
   methods: {
     toggle() {
       this.login_form = !this.login_form;
@@ -156,8 +159,6 @@ export default {
 
           this.$store.user = res.data.user;
           this.$store.state = res.data.state;
-          this.$store.email = res.data.email;
-
           this.$router.push("upload");
         })
         .catch(() => this.errors.push("Login was unsuccessful")); //wrong credentials
@@ -171,7 +172,7 @@ export default {
 
       console.log("signup!!");
       this.$axios
-        .post("http://127.0.0.1:5000/signin", {
+        .post("http://127.0.0.1:5000/update", {
           email: this.user.email,
           name: this.user.name,
           password: this.user.password,
@@ -184,8 +185,6 @@ export default {
             "token " + res.data.token;
 
           this.$store.user = this.user.name;
-          this.$store.email = res.data.email;
-
           this.$router.push("upload");
         })
         .catch(() => (this.error = "Username already exists")); 

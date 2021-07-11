@@ -1,6 +1,6 @@
 <template>
   <div id="chart">
-    <apexchart type="pie" :options="chartOptions" :series="series"></apexchart>
+    <apexchart v-if="loaded" type="pie" :options="chartOptions" :series="series"></apexchart>
   </div>
 </template>
 
@@ -15,8 +15,10 @@ export default {
   },
   data() {
     return {
-      series: [44, 55, 13, 43, 22],
+      loaded: false,
+      series: [1,1,1,1,1],
       chartOptions: {
+        colors: ['#008FFB', '#00E396', '#FEB019', '#FF4560', '#775DD0'],
          title: {
           text: "Number of Requests per Response code",
           align: "center",
@@ -25,7 +27,7 @@ export default {
           width: 380,
           type: "pie",
         },
-        labels: ["Team A", "Team B", "Team C", "Team D", "Team E"],
+        labels: [],
         responsive: [
           {
             breakpoint: 480,
@@ -42,7 +44,7 @@ export default {
       },
     };
   },
-  mounted(){
+  created(){
         console.log("mounted pie chart")
      this.$axios
       .get("http://127.0.0.1:5000/status", {
@@ -57,6 +59,7 @@ export default {
               labels : res.data.statuses,
               
             }
+        this.loaded = true
 
 
       })

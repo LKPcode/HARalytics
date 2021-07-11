@@ -1,6 +1,6 @@
 <template>
   <div class="particles">
-    <div id="particles-js"></div>
+    <div id="particles-js" :style="'background:'+ bg"></div>
   </div>
 </template>
 
@@ -8,12 +8,13 @@
 import "particles.js";
 export default {
   name: "particles",
+  props:['bg'],
   mounted() {
     this.initParticles();
   },
   data() {
     return {
-      bg: "#111111",
+      
     };
   },
   methods: {

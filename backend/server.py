@@ -40,16 +40,16 @@ def login():
     print(db_user)
     if db_user is not None:
         state = "user" if db_user["admin"]==0 else "admin" 
-        return jsonify({"token": encode_jwt(db_user).decode("utf-8"), "user": db_user["username"], "state": state }), 201
+        return jsonify({"token": encode_jwt(db_user).decode("utf-8"), "user": db_user["username"], "state": state, "email": db_user["email"]  }), 201
     else:
         return jsonify({"msg": "user credentials are not correct"}), 401
 
 
 @app.route("/upload", methods=["POST"])
-@authentication_required
+@authentication_required(False)
 def upload_data():
     data = request.json
-    print(request.user, "HELLLOOO")
+    print(request.user, "UPLOAD")
     try:
         db.insert_data(data, request.user)
         return jsonify({"msg": "upload was succesfull"}), 200
@@ -69,12 +69,12 @@ def send_heatmap_data():
         new_structure.append([row["x"], row["y"], 1.0])
 
     json_string = json.dumps(new_structure)
-    print(json_string)
+    print("HETMAP: ", json_string)
     return json_string
 
 
 @app.route("/server_graph", methods=["GET"])
-@authentication_required(True)
+# @authentication_required(True)
 def send_server_graph_data():
 
     all_data = db.get_server_graph_data()

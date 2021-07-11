@@ -1,6 +1,6 @@
 <template>
   <div id="chart">
-    <apexchart type="pie" :options="chartOptions" :series="series"></apexchart>
+    <apexchart v-if="loaded" type="pie" :options="chartOptions" :series="series"></apexchart>
   </div>
 </template>
 
@@ -15,6 +15,7 @@ export default {
   },
   data() {
     return {
+      loaded: false,
       series: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
       chartOptions: {
          title: {
@@ -56,7 +57,7 @@ export default {
         this.chartOptions = {
               labels : res.data.types,
             }
-
+        this.loaded = true
        
       })
       .catch((err) => console.log(err.response));

@@ -15,16 +15,20 @@ Vue.component('apexchart', VueApexCharts)
 
 
 
-const store = Vue.observable({ authenticated: false, user: "u",  state: "u", token: "", primary_color: "#111111" , secondary_color: "#666777",
+const store = Vue.observable({ authenticated: false, user: "",  state: "", token: "", email:"",
  setToken(res){
   localStorage.setItem("token", res.token)
   localStorage.setItem("user", res.user)
   localStorage.setItem("state", res.state)
+  localStorage.setItem("email", res.email)
+
   this.authenticated = true
   this.token = token
 },
   logout(){
     localStorage.setItem("token", "")
+    localStorage.setItem("email", "")
+
     
     localStorage.setItem("user", "")
     localStorage.setItem("state", "")
@@ -36,6 +40,8 @@ const store = Vue.observable({ authenticated: false, user: "u",  state: "u", tok
 let token = localStorage.getItem("token");
 store.user = localStorage.getItem("user");
 store.state = localStorage.getItem("state");
+store.email = localStorage.getItem("email");
+
  store.token = token;
 if(token == "" || !token){
   store.authenticated = false
