@@ -19,6 +19,9 @@
         <li class="nav-item active">
           <a class="nav-link" @click="$router.push('upload')">Upload</a>
         </li>
+        <li class="nav-item active">
+          <a class="nav-link" @click="$router.push('update')">Update Account</a>
+        </li>
       </ul>
 
       <button

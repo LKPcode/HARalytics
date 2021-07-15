@@ -52,6 +52,7 @@ def upload_data():
     print(request.user, "UPLOAD")
     try:
         db.insert_data(data, request.user)
+        db.update_last_upload(request.user)
         return jsonify({"msg": "upload was succesfull"}), 200
     except Exception as e:
         print(f"Error: {e}")
@@ -199,6 +200,27 @@ def all_options():
     json_string = json.dumps(data)
     # print(json_string)
     return json_string
+
+
+@app.route("/update-account", methods=["POST"])
+@authentication_required(False)
+def update_account():
+    db = MySQL()
+    print(request.json)
+    db.change_password(request.user , request.json["new_password"] )
+    db.change_username(request.user , request.json["new_username"] )
+
+    db_user = db.user_exists(request.user) 
+    print(db_user)
+    if db_user is not None:
+        state = "user" if db_user["admin"]==0 else "admin" 
+        return jsonify({"token": encode_jwt(db_user).decode("utf-8"), "user": db_user["username"], "state": state, "email": db_user["email"]  }), 201
+    else:
+        return jsonify({"msg": "user credentials are not correct"}), 401
+
+
+
+
 
 def change_structure(values):
 

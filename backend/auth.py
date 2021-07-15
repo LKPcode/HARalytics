@@ -20,16 +20,17 @@ def authentication_required(status="User"):
         def wrapper(*args, **kwargs):
             print("Status: ", status)
             bearer = request.headers.get("Authorization")
+            print("BEARER", bearer)
             if bearer is not None:
-                try:
+                # try:
                     token = bearer.split(" ")[1]
                     print(token)
                     request.user = decode_jwt(str.encode(token))
                     print(request.user)
                     return fn(*args, **kwargs)
-                except Exception as e:
-                    print(e)
-                    return jsonify({"msg": "Token was not valid"}), 401
+                # except Exception as e:
+                #     print(e)
+                #     return jsonify({"msg": "Token was not valid"}), 401
             else:
                 return jsonify({"msg": "Token was not provided"}), 401
         # print(wrapper.__name__,fn.__name__)

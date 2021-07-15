@@ -372,6 +372,44 @@ class MySQL:
                         response[key].append(dict[key])
             return response
 
+    def change_password(self, user, new_password):
+            mycursor = self.mydb.cursor()
+            sql = """
+                    UPDATE User
+                    SET password = %s
+                    WHERE email = %s
+                """
+            val = (new_password, user['email'])
+            mycursor.execute(sql,val)
+            self.mydb.commit()
+            print(mycursor.rowcount, "record(s) affected")
+
+    def change_username(self, user, new_username):
+        mycursor = self.mydb.cursor()
+        sql = """
+                UPDATE User
+                SET username = %s
+                WHERE email = %s
+              """
+        val = (new_username, user['email'])
+        mycursor.execute(sql,val)
+        self.mydb.commit()
+        print(mycursor.rowcount, "record(s) affected")
+
+    def update_last_upload(self, user):
+        mycursor = self.mydb.cursor()
+        sql = """
+                UPDATE User
+                SET last_upload = CURRENT_TIMESTAMP()
+                WHERE email = %s
+              """
+        val = (user['email'],)
+        mycursor.execute(sql,val)
+        self.mydb.commit()
+        print(mycursor.rowcount, "record(s) affected")
+
+
+
 
 
 # DATA CLEANING FUNCTIONS

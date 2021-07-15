@@ -55,7 +55,7 @@
           <button
             @click="
               if (login_form) login();
-              else signup();
+              else update();
             "
             type="submit"
             class="btn btn-primary btn-lg btn-block"
@@ -130,53 +130,23 @@ export default {
       return this.errors.length == 0;
     },
 
-    login() {
+
+    update() {
       if (!this.inputIsCorrect()) {
         return 0;
       }
 
-      console.log("login!!", {
-          email: this.user.email,
-          name: this.user.name,
-          password: this.user.password,
-        });
-
-  
+      console.log("update!!");
       this.$axios
-        .post("http://127.0.0.1:5000/login",
-        {
+        .post("http://127.0.0.1:5000/update-account", {
           email: this.user.email,
-          name: this.user.name,
-          password: this.user.password,
-        }
-        )
-        .then((res) => {
-          this.msg = res.data;
-          console.log(res.data)
-          this.$store.setToken(res.data);
-          this.$axios.defaults.headers.common["Authorization"] =
-            "token " + res.data.token;
-
-          this.$store.user = res.data.user;
-          this.$store.state = res.data.state;
-          this.$router.push("upload");
-        })
-        .catch(() => this.errors.push("Login was unsuccessful")); //wrong credentials
-    },
-
-
-    signup() {
-      if (!this.inputIsCorrect()) {
-        return 0;
-      }
-
-      console.log("signup!!");
-      this.$axios
-        .post("http://127.0.0.1:5000/update", {
-          email: this.user.email,
-          name: this.user.name,
-          password: this.user.password,
+          new_username: this.user.name,
+          new_password: this.user.password,
           password_2: this.user.password_2,
+        },{
+          headers: {
+            Authorization: `Token ${this.$store.token}`,
+          },
         })
         .then((res) => {
           this.msg = res.data;
@@ -185,7 +155,7 @@ export default {
             "token " + res.data.token;
 
           this.$store.user = this.user.name;
-          this.$router.push("upload");
+          this.$router.push("/upload");
         })
         .catch(() => (this.error = "Username already exists")); 
     },
